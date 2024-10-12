@@ -63,6 +63,61 @@ void plotWaveform(const std::vector<double>& data_vector, unsigned int sample_ra
     }
 }
 
+void plotHistogram(const std::vector<double>& data, const std::string& title, int num_bins, bool display = true) {
+    // Ensure that the "../plots" directory exists
+    std::filesystem::create_directory("../plots");
+
+    // Find the range of the data
+    auto [min_it, max_it] = std::minmax_element(data.begin(), data.end());
+    double min_val = *min_it;
+    double max_val = *max_it;
+
+    // Create bins
+    std::vector<int> bins(num_bins, 0);
+    double bin_width = (max_val - min_val) / num_bins;
+
+    // Fill the bins
+    for (double value : data) {
+        int bin = static_cast<int>((value - min_val) / bin_width);
+        if (bin == num_bins) bin--;  // Handle edge case for maximum value
+        bins[bin]++;
+    }
+
+    // Create x-axis values (bin centers)
+    std::vector<double> bin_centers(num_bins);
+    for (int i = 0; i < num_bins; i++) {
+        bin_centers[i] = min_val + (i + 0.5) * bin_width;
+    }
+
+    // Plot the histogram
+    Gnuplot gp;
+
+    // Save to PNG file
+    gp << "set terminal pngcairo size 800,600\n";
+    gp << "set output '../plots/" << title << ".png'\n";
+    gp << "set title '" << title << "'\n";
+    gp << "set xlabel 'Amplitude'\n";
+    gp << "set ylabel 'Frequency'\n";
+    gp << "set style fill solid 0.5\n";
+    gp << "set boxwidth " << bin_width * 0.9 << "\n";
+    gp << "set xrange [-1:1]\n";
+    gp << "plot '-' using 1:2 with boxes notitle\n";
+    gp.send1d(boost::make_tuple(bin_centers, bins));
+
+    // Display the plot if display is true
+    if (display) {
+        gp << "set terminal wxt size 800,600\n";
+        gp << "set title '" << title << "'\n";
+        gp << "set xlabel 'Amplitude'\n";
+        gp << "set ylabel 'Frequency'\n";
+        gp << "set style fill solid 0.5\n";
+        gp << "set boxwidth " << bin_width * 0.9 << "\n";
+        gp << "set xrange [-1:1]\n";
+        gp << "plot '-' using 1:2 with boxes notitle\n";
+        gp.send1d(boost::make_tuple(bin_centers, bins));
+    }
+}
+
 int main() {
     std::string filePath = R"(C:\Users\jmtia\Code projects\IC\IC-projeto\Parte2-audio\datasets\sample01.wav)";
 
@@ -92,6 +147,22 @@ int main() {
     // Plot the left and right channel waveforms
     plotWaveform(leftChannel, buffer.getSampleRate(), "Left Channel", false);
     plotWaveform(rightChannel, buffer.getSampleRate(), "Right Channel", false);
+
+    // Calculate MID and SIDE channels
+    std::vector<double> midChannel(leftChannel.size());
+    std::vector<double> sideChannel(leftChannel.size());
+    for (size_t i = 0; i < leftChannel.size(); ++i) {
+        midChannel[i] = (leftChannel[i] + rightChannel[i]) / 2.0;
+        sideChannel[i] = (leftChannel[i] - rightChannel[i]) / 2.0;
+    }
+
+    // Plot histograms
+    int num_bins = 64;  // You can adjust this value
+    bool display_histograms = true;  // Set to false if you don't want to display the plots
+    plotHistogram(leftChannel, "Left Channel Histogram", num_bins, display_histograms);
+    plotHistogram(rightChannel, "Right Channel Histogram", num_bins, display_histograms);
+    plotHistogram(midChannel, "MID Channel Histogram", num_bins, display_histograms);
+    plotHistogram(sideChannel, "SIDE Channel Histogram", num_bins, display_histograms);
 
     return 0;
 }
