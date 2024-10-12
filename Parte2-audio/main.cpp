@@ -17,8 +17,7 @@ void printAudioInfo(const sf::SoundBuffer& buffer) {
 
 // Function to plot waveform data
 void plotWaveform(const std::vector<double>& data_vector, unsigned int sample_rate, const std::string& channel_name, bool display = true) {
-    const size_t target_min_samples = 2000;
-    const size_t target_max_samples = 20000;
+    const size_t target_max_samples = 10000;
     
     // Calculate the downsampling factor
     size_t downsample_factor = 1;
@@ -91,8 +90,8 @@ int main() {
     }
 
     // Plot the left and right channel waveforms
-    plotWaveform(leftChannel, buffer.getSampleRate(), "Left Channel");
-    plotWaveform(rightChannel, buffer.getSampleRate(), "Right Channel");
+    plotWaveform(leftChannel, buffer.getSampleRate(), "Left Channel", false);
+    plotWaveform(rightChannel, buffer.getSampleRate(), "Right Channel", false);
 
     return 0;
 }
