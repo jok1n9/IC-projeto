@@ -13,14 +13,36 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
+# Find Boost
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost REQUIRED COMPONENTS iostreams system filesystem)
+
+# Add gnuplot-iostream
+add_library(gnuplot-iostream INTERFACE)
+target_include_directories(gnuplot-iostream INTERFACE ${CMAKE_SOURCE_DIR})  # Assuming gnuplot-iostream.h is in the project root
+
 add_executable(main main.cpp)
-target_link_libraries(main PRIVATE sfml-graphics sfml-audio)
+target_link_libraries(main PRIVATE 
+    sfml-graphics 
+    sfml-audio
+    gnuplot-iostream
+    Boost::iostreams
+    Boost::system
+    Boost::filesystem
+)
 target_compile_features(main PRIVATE cxx_std_17)
 
-if(WIN32)
-    add_custom_command(
-        TARGET main
-        COMMENT "Copy OpenAL DLL"
-        PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:main>
-        VERBATIM)
+
+
+find_program(GNUPLOT_EXECUTABLE NAMES gnuplot)
+if(NOT GNUPLOT_EXECUTABLE)
+    message(FATAL_ERROR "gnuplot not found. Please install gnuplot and make sure it's in your PATH.")
+else()
+    message(STATUS "Found gnuplot: ${GNUPLOT_EXECUTABLE}")
 endif()
+
+# If Boost is installed in a non-standard location, you might need to add:
+# set(BOOST_ROOT "/path/to/boost")
+# Before the find_package(Boost ...) line
