@@ -150,16 +150,18 @@ std::vector<sf::Int16> quantizeAudio(const std::vector<sf::Int16> &samples, int 
     return quantizedSamples;
 }
 
-void saveQuantizedWav(const std::vector<sf::Int16>& samples, unsigned int sampleRate, unsigned int channelCount, const std::string& filename) {
+void saveQuantizedWav(const std::vector<sf::Int16> &samples, unsigned int sampleRate, unsigned int channelCount, const std::string &filename)
+{
     sf::SoundBuffer buffer;
     buffer.loadFromSamples(samples.data(), samples.size(), channelCount, sampleRate);
-    
+
     // Ensure that the output directory exists
     std::string output_directory = "../outputs/audio/";
     std::filesystem::create_directory("../outputs/");
     std::filesystem::create_directory(output_directory);
 
-    if (!buffer.saveToFile(output_directory + filename)) {
+    if (!buffer.saveToFile(output_directory + filename))
+    {
         std::cerr << "Failed to save WAV file: " << filename << std::endl;
     }
 }
@@ -189,18 +191,20 @@ std::pair<double, double> calculateMSEAndSNR(const std::vector<double> &original
     return {mse, snr};
 }
 
-std::vector<std::complex<double>> computeFFT(const std::vector<double>& signal) {
+std::vector<std::complex<double>> computeFFT(const std::vector<double> &signal)
+{
     int n = signal.size();
 
     // Allocate input and output arrays for FFTW
-    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * n);
-    fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * n);
+    fftw_complex *in = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * n);
+    fftw_complex *out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * n);
 
     // Create FFTW plan
     fftw_plan plan = fftw_plan_dft_1d(n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
     // Copy input data
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         in[i][0] = signal[i];
         in[i][1] = 0.0;
     }
@@ -210,7 +214,8 @@ std::vector<std::complex<double>> computeFFT(const std::vector<double>& signal) 
 
     // Copy output data
     std::vector<std::complex<double>> result(n);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         result[i] = std::complex<double>(out[i][0], out[i][1]);
     }
 
@@ -222,12 +227,14 @@ std::vector<std::complex<double>> computeFFT(const std::vector<double>& signal) 
     return result;
 }
 
-void plotFrequencySpectrum(const std::vector<std::complex<double>>& fft_result, double sample_rate, const std::string& title, bool display = false) {
+void plotFrequencySpectrum(const std::vector<std::complex<double>> &fft_result, double sample_rate, const std::string &title, bool display = false)
+{
     std::vector<double> magnitudes;
     std::vector<double> frequencies;
 
     int n = fft_result.size();
-    for (int i = 0; i < n / 2; i++) {
+    for (int i = 0; i < n / 2; i++)
+    {
         double magnitude = std::abs(fft_result[i]);
         double frequency = i * sample_rate / n;
 
@@ -264,26 +271,59 @@ void plotFrequencySpectrum(const std::vector<std::complex<double>>& fft_result, 
     }
 }
 
-
 int main(int argc, char *argv[])
 {
+    /***************************************
+     *           PARSING ARGUMENTS         *
+     ***************************************/
+
     // Default values
     int sampleNumber = 1;
     int bitsToReduce = 10;
+    bool generateWaveform = false;
+    bool generateHistograms = false;
+    bool generateQuantizedWaveform = false;
+    bool generateAudioFile = false;
+    bool generateFFT = false;
 
     // Parse command line arguments
-    if (argc > 1) sampleNumber = std::stoi(argv[1]);
-    if (argc > 2) bitsToReduce = std::stoi(argv[2]);
+    if (argc > 1)
+        sampleNumber = std::stoi(argv[1]);
+    if (argc > 2)
+        bitsToReduce = std::stoi(argv[2]);
+
+    // Parse command line arguments
+    for (int i = 3; i < argc; ++i)
+    {
+        std::string arg = argv[i];
+        if (arg == "-w")
+            generateWaveform = true;
+        else if (arg == "-h")
+            generateHistograms = true;
+        else if (arg == "-q")
+            generateQuantizedWaveform = true;
+        else if (arg == "-a")
+            generateAudioFile = true;
+        else if (arg == "-f")
+            generateFFT = true;
+    }
+
+    // If no specific outputs are requested, generate all
+    if (!(generateWaveform || generateHistograms || generateQuantizedWaveform || generateAudioFile || generateFFT))
+    {
+        generateWaveform = generateHistograms = generateQuantizedWaveform = generateAudioFile = generateFFT = true;
+    }
+
+    /***************************************
+     *                TASK 1               *
+     ***************************************/
 
     std::string filePath = "../datasets/";
     std::string fileName = "sample";
-    if (sampleNumber < 10) fileName += "0";
+    if (sampleNumber < 10)
+        fileName += "0";
     fileName += std::to_string(sampleNumber) + ".wav";
     filePath += fileName;
-
-    /***************************************
-     *                TASK 1                *
-     ****************************************/
 
     // Load the WAV file
     sf::SoundBuffer buffer;
@@ -302,8 +342,8 @@ int main(int argc, char *argv[])
     printAudioInfo(buffer);
 
     /***************************************
-     *                TASK 2                *
-     ****************************************/
+     *                TASK 2               *
+     ***************************************/
 
     // Split the samples into left and right channels
     std::vector<double> leftChannel;
@@ -315,12 +355,15 @@ int main(int argc, char *argv[])
     }
 
     // Plot the left and right channel waveforms
-    plotWaveform(leftChannel, buffer.getSampleRate(), fileName + " - Left Channel");
-    plotWaveform(rightChannel, buffer.getSampleRate(), fileName + " - Right Channel");
+    if (generateWaveform)
+    {
+        plotWaveform(leftChannel, buffer.getSampleRate(), fileName + " - Left Channel");
+        plotWaveform(rightChannel, buffer.getSampleRate(), fileName + " - Right Channel");
+    }
 
     /***************************************
-     *                TASK 3                *
-     ****************************************/
+     *                TASK 3               *
+     ***************************************/
 
     // Calculate MID and SIDE channels
     std::vector<double> midChannel(leftChannel.size());
@@ -332,25 +375,30 @@ int main(int argc, char *argv[])
     }
 
     // Plot histograms
-    int num_bins = 64;               // You can adjust this value
-    bool display_histograms = false; // Set to false if you don't want to display the plots
-    plotHistogram(leftChannel, fileName + " - Left Channel Histogram", num_bins, display_histograms);
-    plotHistogram(rightChannel, fileName + " - Right Channel Histogram", num_bins, display_histograms);
-    plotHistogram(midChannel, fileName + " - MID Channel Histogram", num_bins, display_histograms);
-    plotHistogram(sideChannel, fileName + " - SIDE Channel Histogram", num_bins, display_histograms);
+    int num_bins = 64;
+    if (generateHistograms)
+    {
+        plotHistogram(leftChannel, fileName + " - Left Channel Histogram", num_bins);
+        plotHistogram(rightChannel, fileName + " - Right Channel Histogram", num_bins);
+        plotHistogram(midChannel, fileName + " - MID Channel Histogram", num_bins);
+        plotHistogram(sideChannel, fileName + " - SIDE Channel Histogram", num_bins);
+    }
 
     /***************************************
-     *                TASK 4                *
-     ****************************************/
+     *                TASK 4               *
+     ***************************************/
 
     // Quantize the audio (reduce by 4 bits)
     std::vector<sf::Int16> quantizedSamples = quantizeAudio(sampleVector, bitsToReduce);
-
-    // Save the quantized audio to a new WAV file
-    std::string quantizedFileName = "sample";
-    if (sampleNumber < 10) quantizedFileName += "0";
-    quantizedFileName += std::to_string(sampleNumber) + "_" + std::to_string(16 - bitsToReduce) + "bits.wav";
-    saveQuantizedWav(quantizedSamples, buffer.getSampleRate(), buffer.getChannelCount(), quantizedFileName);
+    if (generateAudioFile)
+    {
+        // Save the quantized audio to a new WAV file
+        std::string quantizedFileName = "sample";
+        if (sampleNumber < 10)
+            quantizedFileName += "0";
+        quantizedFileName += std::to_string(sampleNumber) + "_" + std::to_string(16 - bitsToReduce) + "bits.wav";
+        saveQuantizedWav(quantizedSamples, buffer.getSampleRate(), buffer.getChannelCount(), quantizedFileName);
+    }
 
     // Split the quantized samples into left and right channels
     std::vector<double> quantizedLeftChannel;
@@ -361,30 +409,33 @@ int main(int argc, char *argv[])
         quantizedRightChannel.push_back(static_cast<double>(quantizedSamples[i + 1]) / 32768.0);
     }
 
-    // Create vectors for the first few samples
-    int initialOffset = 44100; // skip the first second (may be silence)
-    int samplesToDisplay = 500;
-    std::vector<double> leftChannelZoomIn(leftChannel.begin() + initialOffset, leftChannel.begin() + samplesToDisplay + initialOffset);
-    std::vector<double> rightChannelZoomIn(rightChannel.begin() + initialOffset, rightChannel.begin() + samplesToDisplay + initialOffset);
-    std::vector<double> quantizedLeftChannelZoomIn(quantizedLeftChannel.begin() + initialOffset, quantizedLeftChannel.begin() + samplesToDisplay + initialOffset);
-    std::vector<double> quantizedRightChannelZoomIn(quantizedRightChannel.begin() + initialOffset, quantizedRightChannel.begin() + samplesToDisplay + initialOffset);
+    if (generateQuantizedWaveform)
+    {
+        // Create vectors for the first few samples
+        int initialOffset = 44100; // skip the first second (may be silence)
+        int samplesToDisplay = 500;
+        std::vector<double> leftChannelZoomIn(leftChannel.begin() + initialOffset, leftChannel.begin() + samplesToDisplay + initialOffset);
+        std::vector<double> rightChannelZoomIn(rightChannel.begin() + initialOffset, rightChannel.begin() + samplesToDisplay + initialOffset);
+        std::vector<double> quantizedLeftChannelZoomIn(quantizedLeftChannel.begin() + initialOffset, quantizedLeftChannel.begin() + samplesToDisplay + initialOffset);
+        std::vector<double> quantizedRightChannelZoomIn(quantizedRightChannel.begin() + initialOffset, quantizedRightChannel.begin() + samplesToDisplay + initialOffset);
 
-    // Plot the original and quantized waveforms
-    plotWaveform(leftChannelZoomIn, buffer.getSampleRate(), fileName + " - Left Channel (zoom)");
-    plotWaveform(rightChannelZoomIn, buffer.getSampleRate(), fileName + " - Right Channel (zoom)");
-    plotWaveform(quantizedLeftChannelZoomIn, buffer.getSampleRate(), fileName + " - Left Channel (" + std::to_string(16 - bitsToReduce) + " bits) (zoom)");
-    plotWaveform(quantizedRightChannelZoomIn, buffer.getSampleRate(), fileName + " - Right Channel (" + std::to_string(16 - bitsToReduce) + " bits) (zoom)");
+        // Plot the original and quantized waveforms
+        plotWaveform(leftChannelZoomIn, buffer.getSampleRate(), fileName + " - Left Channel (zoom)");
+        plotWaveform(rightChannelZoomIn, buffer.getSampleRate(), fileName + " - Right Channel (zoom)");
+        plotWaveform(quantizedLeftChannelZoomIn, buffer.getSampleRate(), fileName + " - Left Channel (" + std::to_string(16 - bitsToReduce) + " bits) (zoom)");
+        plotWaveform(quantizedRightChannelZoomIn, buffer.getSampleRate(), fileName + " - Right Channel (" + std::to_string(16 - bitsToReduce) + " bits) (zoom)");
+    }
 
     /***************************************
-     *                TASK 5                *
-     ****************************************/
+     *                TASK 5               *
+     ***************************************/
 
     // Calculate MSE and SNR for left and right channels
     auto [leftMSE, leftSNR] = calculateMSEAndSNR(leftChannel, quantizedLeftChannel);
     auto [rightMSE, rightSNR] = calculateMSEAndSNR(rightChannel, quantizedRightChannel);
 
     // Print the results
-    std::cout << "\nQuantization Quality Metrics for " << std::to_string(16 - bitsToReduce) << " bit Audio:" << std::endl;
+    std::cout << "\nQuantization Quality Metrics for " << fileName << " (" << std::to_string(16 - bitsToReduce) << " bit):" << std::endl;
     std::cout << "Left Channel:" << std::endl;
     std::cout << "  MSE: " << leftMSE << std::endl;
     std::cout << "  SNR: " << leftSNR << " dB" << std::endl;
@@ -401,23 +452,25 @@ int main(int argc, char *argv[])
     std::cout << "  SNR: " << avgSNR << " dB" << std::endl;
 
     /***************************************
-     *         Extra: FFT comparison        *
-     ****************************************/
-
-    // Compute FFT for the original mid channel
-    std::vector<std::complex<double>> fft_mid = computeFFT(midChannel);
-
-    // Plot and save the frequency spectrum of the original mid channel
-    plotFrequencySpectrum(fft_mid, buffer.getSampleRate(), fileName + " - Mid Channel FFT (Original)");
-
-    // Compute and plot FFT for the quantized mid channel
-    std::vector<double> quantizedMidChannel(midChannel.size());
-    for (size_t i = 0; i < midChannel.size(); ++i)
+     *         Extra: FFT comparison       *
+     ***************************************/
+    if (generateFFT)
     {
-        quantizedMidChannel[i] = (quantizedLeftChannel[i] + quantizedRightChannel[i]) / 2.0;
+        // Compute FFT for the original mid channel
+        std::vector<std::complex<double>> fft_mid = computeFFT(midChannel);
+
+        // Plot and save the frequency spectrum of the original mid channel
+        plotFrequencySpectrum(fft_mid, buffer.getSampleRate(), fileName + " - Mid Channel FFT (Original)");
+
+        // Compute and plot FFT for the quantized mid channel
+        std::vector<double> quantizedMidChannel(midChannel.size());
+        for (size_t i = 0; i < midChannel.size(); ++i)
+        {
+            quantizedMidChannel[i] = (quantizedLeftChannel[i] + quantizedRightChannel[i]) / 2.0;
+        }
+        std::vector<std::complex<double>> fft_quantized_mid = computeFFT(quantizedMidChannel);
+        plotFrequencySpectrum(fft_quantized_mid, buffer.getSampleRate(), fileName + " - Mid Channel FFT (Quantized " + std::to_string(16 - bitsToReduce) + " bits)");
     }
-    std::vector<std::complex<double>> fft_quantized_mid = computeFFT(quantizedMidChannel);
-    plotFrequencySpectrum(fft_quantized_mid, buffer.getSampleRate(), fileName + " - Mid Channel FFT (Quantized " + std::to_string(16 - bitsToReduce) + " bits)");
 
     return 0;
 }
