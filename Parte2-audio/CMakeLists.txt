@@ -23,8 +23,16 @@ find_package(Boost REQUIRED COMPONENTS iostreams system filesystem)
 add_library(gnuplot-iostream INTERFACE)
 target_include_directories(gnuplot-iostream INTERFACE ${CMAKE_SOURCE_DIR})  # Assuming gnuplot-iostream.h is in the project root
 
-# Find FFTW
-# find_package(FFTW3 REQUIRED)
+# Set FFTW3 paths
+set(FFTW3_DIR "C:/Program Files/FFTW3")
+set(FFTW3_INCLUDE_DIR "${FFTW3_DIR}")
+set(FFTW3_LIBRARY "${FFTW3_DIR}/libfftw3-3.lib")
+
+# Add include directory
+include_directories(${FFTW3_INCLUDE_DIR})
+
+# Add library directory
+link_directories(${FFTW3_DIR})
 
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE 
@@ -34,6 +42,12 @@ target_link_libraries(main PRIVATE
     Boost::iostreams
     Boost::system
     Boost::filesystem
-    #FFTW3::FFTW3
+    ${FFTW3_LIBRARY}
 )
 target_compile_features(main PRIVATE cxx_std_17)
+
+# Ensure the DLL is copied to the output directory
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${FFTW3_DIR}/libfftw3-3.dll"
+        $<TARGET_FILE_DIR:main>)
