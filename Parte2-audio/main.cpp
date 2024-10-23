@@ -18,7 +18,7 @@ void printAudioInfo(const sf::SoundBuffer &buffer)
 }
 
 // Function to plot waveform data
-void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_rate, const std::string &channel_name, bool display = false)
+void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_rate, const std::string &channel_name)
 {
     const size_t target_max_samples = 10000;
 
@@ -57,21 +57,9 @@ void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_ra
     gp << "set ylabel 'Amplitude'\n";
     gp << "plot '-' with lines title '" << channel_name << "'\n";
     gp.send1d(boost::make_tuple(time, downsampled_data));
-
-    // Display the plot if display is true
-    if (display)
-    {
-        gp << "set terminal wxt size 1200,400\n";
-        gp << "set title '" << channel_name << "'\n";
-        gp << "set xlabel 'Time (s)'\n";
-        gp << "set ylabel 'Amplitude'\n";
-        gp << "plot '-' with lines title '" << channel_name << "'\n";
-        gp.send1d(boost::make_tuple(time, downsampled_data));
-        gp << "set terminal wxt\n"; // Reset terminal to interactive mode
-    }
 }
 
-void plotHistogram(const std::vector<double> &data, const std::string &title, int num_bins, bool display = false)
+void plotHistogram(const std::vector<double> &data, const std::string &title, int num_bins)
 {
     // Find the range of the data
     auto [min_it, max_it] = std::minmax_element(data.begin(), data.end());
@@ -117,20 +105,6 @@ void plotHistogram(const std::vector<double> &data, const std::string &title, in
     gp << "set xrange [-0.8:0.8]\n";
     gp << "plot '-' using 1:2 with boxes notitle\n";
     gp.send1d(boost::make_tuple(bin_centers, bins));
-
-    // Display the plot if display is true
-    if (display)
-    {
-        gp << "set terminal wxt size 800,600\n";
-        gp << "set title '" << title << "'\n";
-        gp << "set xlabel 'Amplitude'\n";
-        gp << "set ylabel 'Frequency'\n";
-        gp << "set style fill solid 0.5\n";
-        gp << "set boxwidth " << bin_width * 0.9 << "\n";
-        gp << "set xrange [-1:1]\n";
-        gp << "plot '-' using 1:2 with boxes notitle\n";
-        gp.send1d(boost::make_tuple(bin_centers, bins));
-    }
 }
 
 std::vector<sf::Int16> quantizeAudio(const std::vector<sf::Int16> &samples, int bitsToReduce)
@@ -227,7 +201,7 @@ std::vector<std::complex<double>> computeFFT(const std::vector<double> &signal)
     return result;
 }
 
-void plotFrequencySpectrum(const std::vector<std::complex<double>> &fft_result, double sample_rate, const std::string &title, bool display = false)
+void plotFrequencySpectrum(const std::vector<std::complex<double>> &fft_result, double sample_rate, const std::string &title)
 {
     std::vector<double> magnitudes;
     std::vector<double> frequencies;
@@ -261,14 +235,6 @@ void plotFrequencySpectrum(const std::vector<std::complex<double>> &fft_result, 
     gp << "set logscale x\n";
     gp << "plot '-' with lines title 'Magnitude Spectrum'\n";
     gp.send1d(boost::make_tuple(frequencies, magnitudes));
-
-    // Display the plot if display is true
-    if (display)
-    {
-        gp << "set terminal wxt size 800,600\n";
-        gp << "replot\n";
-        gp << "pause mouse close\n";
-    }
 }
 
 int main(int argc, char *argv[])
