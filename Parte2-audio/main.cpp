@@ -2,9 +2,20 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <complex>
 #include <filesystem>
-#include <gnuplot-iostream.h>
+
+#ifdef USE_PLOTTING
+#include "gnuplot-iostream.h"
+#else
+#include <fstream>
+#include <iomanip>
+#endif
+
+#ifdef USE_FFT
 #include <fftw3.h>
+#endif
+
 
 // Function to print audio information
 void printAudioInfo(const sf::SoundBuffer &buffer)
@@ -24,8 +35,7 @@ void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_ra
 
     // Calculate the downsampling factor
     size_t downsample_factor = 1;
-    if (data_vector.size() > target_max_samples)
-    {
+    if (data_vector.size() > target_max_samples){
         downsample_factor = std::ceil(static_cast<double>(data_vector.size()) / target_max_samples);
     }
 
@@ -35,8 +45,7 @@ void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_ra
     downsampled_data.reserve(std::min(data_vector.size(), target_max_samples));
     time.reserve(std::min(data_vector.size(), target_max_samples));
 
-    for (size_t i = 0; i < data_vector.size(); i += downsample_factor)
-    {
+    for (size_t i = 0; i < data_vector.size(); i += downsample_factor){
         downsampled_data.push_back(data_vector[i]);
         time.push_back(static_cast<double>(i) / sample_rate);
     }
@@ -46,6 +55,7 @@ void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_ra
     std::filesystem::create_directory("../outputs/");
     std::filesystem::create_directory(output_directory);
 
+#ifdef USE_PLOTTING
     // Create a Gnuplot object with persist option
     Gnuplot gp;
 
@@ -57,6 +67,22 @@ void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_ra
     gp << "set ylabel 'Amplitude'\n";
     gp << "plot '-' with lines title '" << channel_name << "'\n";
     gp.send1d(boost::make_tuple(time, downsampled_data));
+#else
+    // Save data to CSV file
+    std::string filename = output_directory + channel_name + ".csv";
+    std::ofstream outfile(filename);
+    outfile << std::setprecision(10); // Set precision for floating-point numbers
+    
+    // Write header
+    outfile << "Time (s),Amplitude\n";
+    
+    // Write data
+    for (size_t i = 0; i < downsampled_data.size(); ++i){
+        outfile << time[i] << "," << downsampled_data[i] << "\n";
+    }
+    
+    outfile.close();
+#endif
 }
 
 void plotHistogram(const std::vector<double> &data, const std::string &title, int num_bins)
@@ -71,8 +97,7 @@ void plotHistogram(const std::vector<double> &data, const std::string &title, in
     double bin_width = (max_val - min_val) / num_bins;
 
     // Fill the bins
-    for (double value : data)
-    {
+    for (double value : data){
         int bin = static_cast<int>((value - min_val) / bin_width);
         if (bin == num_bins)
             bin--; // Handle edge case for maximum value
@@ -81,8 +106,7 @@ void plotHistogram(const std::vector<double> &data, const std::string &title, in
 
     // Create x-axis values (bin centers)
     std::vector<double> bin_centers(num_bins);
-    for (int i = 0; i < num_bins; i++)
-    {
+    for (int i = 0; i < num_bins; i++){
         bin_centers[i] = min_val + (i + 0.5) * bin_width;
     }
 
@@ -91,6 +115,7 @@ void plotHistogram(const std::vector<double> &data, const std::string &title, in
     std::filesystem::create_directory("../outputs/");
     std::filesystem::create_directory(output_directory);
 
+#ifdef USE_PLOTTING
     // Plot the histogram
     Gnuplot gp;
 
@@ -105,7 +130,24 @@ void plotHistogram(const std::vector<double> &data, const std::string &title, in
     gp << "set xrange [-0.8:0.8]\n";
     gp << "plot '-' using 1:2 with boxes notitle\n";
     gp.send1d(boost::make_tuple(bin_centers, bins));
+#else
+    // Save histogram data to CSV file
+    std::string filename = output_directory + title + ".csv";
+    std::ofstream outfile(filename);
+    outfile << std::setprecision(10); // Set precision for floating-point numbers
+    
+    // Write header
+    outfile << "Bin Center,Frequency\n";
+    
+    // Write histogram data
+    for (size_t i = 0; i < bins.size(); ++i){
+        outfile << bin_centers[i] << "," << bins[i] << "\n";
+    }
+    
+    outfile.close();
+#endif
 }
+
 
 std::vector<sf::Int16> quantizeAudio(const std::vector<sf::Int16> &samples, int bitsToReduce)
 {
@@ -165,6 +207,7 @@ std::pair<double, double> calculateMSEAndSNR(const std::vector<double> &original
     return {mse, snr};
 }
 
+#ifdef USE_FFT
 std::vector<std::complex<double>> computeFFT(const std::vector<double> &signal)
 {
     int n = signal.size();
@@ -221,6 +264,7 @@ void plotFrequencySpectrum(const std::vector<std::complex<double>> &fft_result, 
     std::filesystem::create_directory("../outputs/");
     std::filesystem::create_directory(output_directory);
 
+#ifdef USE_PLOTTING
     // Create a Gnuplot object
     Gnuplot gp;
 
@@ -233,9 +277,27 @@ void plotFrequencySpectrum(const std::vector<std::complex<double>> &fft_result, 
     gp << "set xrange [20:10000]\n";
     gp << "set yrange [0:*]\n";
     gp << "set logscale x\n";
-    gp << "plot '-' with lines title 'Magnitude Spectrum'\n";
+    gp << "plot '-' using 1:2 with lines title 'Magnitude Spectrum'\n";
     gp.send1d(boost::make_tuple(frequencies, magnitudes));
+#else
+    // Save frequency spectrum data to CSV file
+    std::string filename = output_directory + title + ".csv";
+    std::ofstream outfile(filename);
+    outfile << std::setprecision(10);
+    
+    // Write header
+    outfile << "Frequency (Hz),Magnitude\n";
+    
+    // Write frequency spectrum data
+    for (size_t i = 0; i < frequencies.size(); ++i)
+    {
+        outfile << frequencies[i] << "," << magnitudes[i] << "\n";
+    }
+    
+    outfile.close();
+#endif
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -417,6 +479,7 @@ int main(int argc, char *argv[])
     std::cout << "  MSE: " << avgMSE << std::endl;
     std::cout << "  SNR: " << avgSNR << " dB" << std::endl;
 
+#ifdef USE_FFT
     /***************************************
      *         Extra: FFT comparison       *
      ***************************************/
@@ -437,6 +500,6 @@ int main(int argc, char *argv[])
         std::vector<std::complex<double>> fft_quantized_mid = computeFFT(quantizedMidChannel);
         plotFrequencySpectrum(fft_quantized_mid, buffer.getSampleRate(), fileName + " - Mid Channel FFT (Quantized " + std::to_string(16 - bitsToReduce) + " bits)");
     }
-
+#endif
     return 0;
 }
