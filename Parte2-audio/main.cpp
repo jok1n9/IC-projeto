@@ -60,7 +60,7 @@ void plotWaveform(const std::vector<double> &data_vector, unsigned int sample_ra
     Gnuplot gp;
 
     // Save to PNG file
-    gp << "set terminal pngcairo size 1200,400\n";
+    gp << "set terminal pngcairo size 900,300\n";
     gp << "set output '" << output_directory << channel_name << ".png'\n";
     gp << "set title '" << channel_name << "'\n";
     gp << "set xlabel 'Time (s)'\n";
@@ -120,7 +120,7 @@ void plotHistogram(const std::vector<double> &data, const std::string &title, in
     Gnuplot gp;
 
     // Save to PNG file
-    gp << "set terminal pngcairo size 800,600\n";
+    gp << "set terminal pngcairo size 600,450\n";
     gp << "set output '" << output_directory << title << ".png'\n";
     gp << "set title '" << title << "'\n";
     gp << "set xlabel 'Amplitude'\n";
@@ -361,17 +361,17 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Read audio samples into a vector and get basic info
-    const sf::Int16 *samples = buffer.getSamples();
-    std::size_t sampleCount = buffer.getSampleCount();
-    std::vector<sf::Int16> sampleVector(samples, samples + sampleCount);
-
     // Print audio file information
     printAudioInfo(buffer);
 
     /***************************************
      *                TASK 2               *
      ***************************************/
+
+    // Read audio samples into a vector and get basic info
+    const sf::Int16 *samples = buffer.getSamples();
+    std::size_t sampleCount = buffer.getSampleCount();
+    std::vector<sf::Int16> sampleVector(samples, samples + sampleCount);
 
     // Split the samples into left and right channels
     std::vector<double> leftChannel;
