@@ -294,15 +294,14 @@ void applyGaussianFilter(const cv::Mat& image) {
 void compareImages(const cv::Mat& img1, const cv::Mat& img2) {
     auto start = std::chrono::high_resolution_clock::now();
 
-    if (img1.size() != img2.size()) {
-        std::cerr << "Error: Images must be of the same size for comparison.\n";
-        return;
-    }
+    cv::Mat resizedImg1;
+    cv::resize(img1, resizedImg1, img2.size());
+
 
     cv::Mat diff;
-    cv::absdiff(img1, img2, diff);
+    cv::absdiff(resizedImg1, img2, diff);
 
-    double mse = cv::norm(img1 - img2, cv::NORM_L2) / (img1.total() * img1.channels());
+    double mse = cv::norm(resizedImg1 - img2, cv::NORM_L2) / (img2.total() * img2.channels());
     std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
 
     double psnr = 10 * log10((255 * 255) / mse);
@@ -312,9 +311,21 @@ void compareImages(const cv::Mat& img1, const cv::Mat& img2) {
     std::chrono::duration<double> duration = end - start;
     std::cout << "Task timer: " << duration.count() << " seconds" << std::endl;
 
-    cv::imshow("Difference Image", diff);
-    cv::waitKey(0);
+    if(displayFlag){
+        cv::imshow("Difference Image", diff);
+        while (cv::getWindowProperty("Difference Image", cv::WND_PROP_VISIBLE) >= 1)
+        {
+            cv::waitKey(1);
+        }
+    }
+
+    if(saveFlag)
+    {
+        cv::imwrite("./output/difference_image.ppm", diff);
+        std::cout << "Quantized image saved as difference_image.ppm." << std::endl;
+    }
 }
+
 
 // Function to quantize a grayscale image
 void quantizeImage(const cv::Mat& image, int levels) {
