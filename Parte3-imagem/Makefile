@@ -16,8 +16,15 @@ SRCS = imagem.cpp
 # Object files
 OBJS = $(SRCS:.cpp=.o)
 
+# Output directory
+OUTDIR = output
+
 # Default target
-all: $(TARGET)
+all: $(OUTDIR) $(TARGET)
+
+# Ensure output directory exists
+$(OUTDIR):
+	mkdir -p $(OUTDIR)
 
 # Build the target
 $(TARGET): $(OBJS)
@@ -31,3 +38,4 @@ $(TARGET): $(OBJS)
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(TARGET)
+	rm -rf $(OUTDIR)/*
