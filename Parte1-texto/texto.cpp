@@ -1,42 +1,3 @@
-// c++ learning
-/*Objectives
-
-    final- histograma de letras e palavras, etc...
-            calculo da entropia
-
-        transformar texto
-        remover tags
-        usar map
-        simbolo peça de info, se for palavras é palavras, se for letras é letras
-        para fazer histograma - gerar .csv ou o proprio programa gerar histograma e talvez guardar em formato de imagem
-
-    
-    ParteA: 1- Open and read a text file line by line or as a stream of characters.
-            2- Store the content in a suitable data structure.
-            3- Make sure the file opens successfully, and handle any errors
-            4- Print the content to check if it has been read correctly.
-
-    ParteB: Before performing statistical analysis, you can normalize the text by applying basic transformations
-            such as:
-            o Converting to lowercase: This ensures that case differences don’t affect the word counts.
-            o Removing punctuation: Punctuation marks are typically ignored when calculating word
-            frequencies.
-
-    ParteC: Counting character frequencies (to calculate the frequency of characters, use a data structure such as
-            std::map to count occurrences of each character).
-            - Iterate through the text and count how many times each character appears.
-            - Store this information in a data structure.
-            - Print out the character frequencies.
-            - Although not mandatory, you can use a plotting library to visualize the frequencies.
-
-    ParteD:  Counting word frequencies
-            - Tokenize the text into words using whitespace as the delimiter.
-            - Store the word counts.
-            - Print out the character frequencies.
-            - Although not mandatory, you can use a plotting library to visualize the frequencies.
-
-
-*/
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -148,7 +109,7 @@ int main(int argc, char*argv[]){
 
     }
 
-    // Output the content and frequencies to the console 
+    // Output the content and frequencies to the console (optional)
 
     /*
     for (const auto& pair : charFreq) {
