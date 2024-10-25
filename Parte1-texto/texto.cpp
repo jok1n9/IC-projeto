@@ -158,7 +158,7 @@ int main(){
     //cout << content << endl;
     
     // Open the destination file
-    ofstream ProcessedFile("ProcessedFile33.txt");
+    ofstream ProcessedFile("ProcessedFile.txt");
     if (!ProcessedFile) {
         cerr << "Failed to open destination file!" << endl;
         return 1;
