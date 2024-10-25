@@ -143,7 +143,7 @@ int main(int argc, char*argv[]){
 
     // Open the character file
 
-    ofstream charCountFile("charCount.txt");
+    ofstream charCountFile("charCount.csv");
     if (!charCountFile) {
         cerr << "Failed to open characters file!" << endl;
         return 1;
@@ -154,14 +154,14 @@ int main(int argc, char*argv[]){
     charCountFile<<"Character,Frequency\n";
 
     for (const auto& pair : charFreq) {
-        charCountFile << pair.first << ": " << pair.second << endl;
+        charCountFile << pair.first << ", " << pair.second << endl;
     }
 
     cout<<"Character file updated\n";
 
     // Open the word file
 
-    ofstream wordCountFile("wordCount.txt");
+    ofstream wordCountFile("wordCount.csv");
     if (!wordCountFile) {
         cerr << "Failed to open characters file!" << endl;
         return 1;
@@ -172,7 +172,7 @@ int main(int argc, char*argv[]){
     wordCountFile<<"Word,Frequency\n";
 
     for (const auto& pair : wordFreq) {
-        wordCountFile << pair.first << ": " << pair.second << endl;
+        wordCountFile << pair.first << ", " << pair.second << endl;
     }
 
     cout<<"Word file updated\n";

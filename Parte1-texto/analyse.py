@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 
 #Read the data from the file
-charFile_path = 'charCount.txt' 
-wordFile_path = 'wordCount.txt'  
+charFile_path = 'charCount.csv' 
+wordFile_path = 'wordCount.csv'  
 
 characters = []
 words = []
@@ -15,7 +15,7 @@ with open(charFile_path, 'r', encoding='utf-8', errors='replace') as file:
     
     for line in file:
         # Split by the colon to extract character and frequency
-        char, freq = line.strip().split(':')
+        char, freq = line.strip().split(',')
         char = char.strip()
         # remove replacement character
         if '�' in char or char == '':
@@ -34,7 +34,7 @@ with open(wordFile_path, 'r', encoding='utf-8', errors='replace') as file:
     
     for line in file:
         # Split by the colon to extract character and frequency
-        string, freq = line.strip().split(':')
+        string, freq = line.strip().split(',')
         words.append(string.strip())  # Remove any surrounding spaces
         frequencies2.append(int(freq.strip()))  # Convert frequency to an integer
 
@@ -61,15 +61,7 @@ ax2.set_ylabel('Frequency')
 ax2.set_xticklabels(words_sorted,rotation=90)
 
 
-#plt.bar(characters_sorted, frequencies_sorted)
-#plt.xticks(rotation=90)
-
-
-# Add titles and labels
-#plt.title('Character Frequency Histogram')
-#plt.xlabel('Character')
-#plt.ylabel('Frequency')
-
 # Step 3: Show the plot
 plt.tight_layout()
+plt.savefig('histograms.png', format='png')  # Save as PNG file
 plt.show()
