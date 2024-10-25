@@ -79,8 +79,8 @@ int main(int argc, char** argv) {
                 return 1;
             }
             else if(saveFlag){
-                cv::imwrite("./output/original.ppm", image);
-                std::cout << "Original saved at: ./output/original.ppm"<< std::endl;
+                cv::imwrite("./output/original.png", image);
+                std::cout << "Original saved at: ./output/original.png"<< std::endl;
             }
             if (calcHistogram) {
                 calculateAndSaveHistogram(image);
@@ -92,10 +92,7 @@ int main(int argc, char** argv) {
                 applyGaussianFilter(image);
             }
             if (quantizeFlag) {
-                // Convert image to grayscale before quantization
-                cv::Mat grayImage;
-                cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
-                quantizeImage(grayImage, quantizationLevels);
+                quantizeImage(image, quantizationLevels);
             }
 
             // Run all operations if --all flag is set
@@ -197,8 +194,8 @@ void calculateAndSaveHistogram(const cv::Mat& image) {
 
     if(saveFlag){
         // Save the histogram as an image
-        cv::imwrite("./output/hist.ppm", histImage);
-        std::cout << "Histogram saved at: ./output/hist.ppm"<< std::endl;
+        cv::imwrite("./output/hist.png", histImage);
+        std::cout << "Histogram saved at: ./output/hist.png"<< std::endl;
     }
     if(displayFlag){
         cv::imshow("Grayscale Histogram", histImage);
@@ -241,16 +238,12 @@ void showChannels(const cv::Mat& image) {
 
     if (saveFlag) {
         // Convert single-channel images to 3-channel images for saving
-        cv::Mat blueChannel, greenChannel, redChannel;
 
-        cv::merge(std::vector<cv::Mat>{bgrChannels[0], cv::Mat::zeros(bgrChannels[0].size(), CV_8U), cv::Mat::zeros(bgrChannels[0].size(), CV_8U)}, blueChannel);
-        cv::merge(std::vector<cv::Mat>{cv::Mat::zeros(bgrChannels[0].size(), CV_8U), bgrChannels[1], cv::Mat::zeros(bgrChannels[0].size(), CV_8U)}, greenChannel);
-        cv::merge(std::vector<cv::Mat>{cv::Mat::zeros(bgrChannels[0].size(), CV_8U), cv::Mat::zeros(bgrChannels[0].size(), CV_8U), bgrChannels[2]}, redChannel);
-
-        cv::imwrite("./output/blue_channel.ppm", blueChannel);
-        cv::imwrite("./output/green_channel.ppm", greenChannel);
-        cv::imwrite("./output/red_channel.ppm", redChannel);
-        std::cout << "Channel images saved as blue_channel.ppm, green_channel.ppm, red_channel.ppm." << std::endl;
+        cv::imwrite("./output/grayscale.png",grayscaleImage);
+        cv::imwrite("./output/blue_channel.png", bgrChannels[0]);
+        cv::imwrite("./output/green_channel.png", bgrChannels[1]);
+        cv::imwrite("./output/red_channel.png", bgrChannels[2]);
+        std::cout << "Channel images saved as grayscale.png, blue_channel.png, green_channel.png, red_channel.png." << std::endl;
     }
 }
 
@@ -263,19 +256,27 @@ void applyGaussianFilter(const cv::Mat& image) {
         cv::GaussianBlur(image, blurredImage, cv::Size(kernelSize, kernelSize), 0);
         std::string windowName = "Gaussian Blur (Kernel Size: " + std::to_string(kernelSize) + ")";
 
+        std::cout << "Original vs Gaussian(Kernel Size: "<< kernelSize <<")" << std::endl;
+        double mse = cv::norm(image - blurredImage, cv::NORM_L2) / (image.total());
+        std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
+        double psnr = 10 * log10((255 * 255) / mse);
+        std::cout << "Peak Signal-to-Noise Ratio (PSNR): " << psnr << " dB" << std::endl;
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        std::cout << "Task timer: " << duration.count() << " seconds" << std::endl;
+
         if (displayFlag) {
             cv::imshow(windowName, blurredImage);
         }
 
         if (saveFlag) {
-            std::string savePath = "./output/gaussian_blur_kernel_" + std::to_string(kernelSize) + ".ppm";
+            std::string savePath = "./output/gaussian_blur_kernel_" + std::to_string(kernelSize) + ".png";
             cv::imwrite(savePath, blurredImage);
             std::cout << "Saved " << savePath << std::endl;
         }
     }
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = end - start;
-    std::cout << "Task timer: " << duration.count() << " seconds" << std::endl;
+
 
     if (displayFlag) {
         cv::imshow("Original Image", image);
@@ -321,8 +322,8 @@ void compareImages(const cv::Mat& img1, const cv::Mat& img2) {
 
     if(saveFlag)
     {
-        cv::imwrite("./output/difference_image.ppm", diff);
-        std::cout << "Quantized image saved as difference_image.ppm." << std::endl;
+        cv::imwrite("./output/difference_image.png", diff);
+        std::cout << "Quantized image saved as difference_image.png." << std::endl;
     }
 }
 
@@ -342,12 +343,12 @@ void quantizeImage(const cv::Mat& image, int levels) {
     for (int i = 0; i < quantizedImage.rows; ++i) {
         for (int j = 0; j < quantizedImage.cols; ++j) {
             uchar pixel = quantizedImage.at<uchar>(i, j);
-            int quantizedPixel = (pixel / step) * step + step / 2; // Center the quantized value
-            quantizedPixel = std::min(quantizedPixel, 255); // Ensure it's within range
+            int quantizedPixel = (pixel / step) * step + step / 2;
             quantizedImage.at<uchar>(i, j) = static_cast<uchar>(quantizedPixel);
         }
     }
 
+    std::cout << "Original vs Quantized"<< std::endl;
     double mse = cv::norm(image - quantizedImage, cv::NORM_L2) / (image.total());
     std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
     double psnr = 10 * log10((255 * 255) / mse);
@@ -369,7 +370,7 @@ void quantizeImage(const cv::Mat& image, int levels) {
     }
 
     if (saveFlag) {
-        cv::imwrite("./output/quantized_image.ppm", quantizedImage);
-        std::cout << "Quantized image saved as quantized_image.ppm." << std::endl;
+        cv::imwrite("./output/quantized_image.png", quantizedImage);
+        std::cout << "Quantized image saved as quantized_image.png." << std::endl;
     }
 }
