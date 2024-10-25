@@ -45,8 +45,10 @@
 #include <cctype> 
 #include <map>
 #include <sstream>
-#include <Windows.h> //if using windows
 
+#ifdef _WIN32  
+#include <Windows.h> //if using windows
+#endif
 
 
 using namespace std;
@@ -100,7 +102,9 @@ int main(int argc, char*argv[]){
     
 
     // Set console output to UTF-8 to handle Unicode characters properly in the console (if using windows)
+    #ifdef _WIN32  
     SetConsoleOutputCP(CP_UTF8);
+    #endif
     
     if (argc < 2) {
         cerr << "Usage: " << argv[0] << " <file_path>" << endl;
