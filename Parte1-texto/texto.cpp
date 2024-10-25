@@ -96,20 +96,24 @@ public:
 
 
 
-int main(){
+int main(int argc, char*argv[]){
     
 
     // Set console output to UTF-8 to handle Unicode characters properly in the console (if using windows)
     SetConsoleOutputCP(CP_UTF8);
     
+    if (argc < 2) {
+        cerr << "Usage: " << argv[0] << " <file_path>" << endl;
+        return 1;
+    }
+    
+    string file_path = argv[1];
     // Open the source file
-    ifstream MyReadFile("pt/ep-00-01-17.txt");
+    ifstream MyReadFile(file_path);
     if (!MyReadFile) {
         cerr << "Failed to open source file!" << endl;
         return 1;
     }
-
-   
 
 
     vector<string> content;
