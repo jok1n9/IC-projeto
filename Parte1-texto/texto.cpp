@@ -82,6 +82,7 @@ int main(int argc, char*argv[]){
 
 
     vector<string> content;
+    vector<string> content2;
     TextProcessor textProcessor;
     string line;
     map<char,int> charFreq;
@@ -94,6 +95,8 @@ int main(int argc, char*argv[]){
         string proccessLine = textProcessor.processText(line);
 
         content.push_back(proccessLine);  // Store each line in the vector
+
+        content2.push_back(line);
 
         auto frequencies = textProcessor.countCharacterFrequencies(proccessLine);
 
@@ -111,7 +114,7 @@ int main(int argc, char*argv[]){
 
     // Output the content and frequencies to the console (optional)
 
-    /*
+    
     for (const auto& pair : charFreq) {
         cout << pair.first << ": " << pair.second << endl;
     }
@@ -119,12 +122,31 @@ int main(int argc, char*argv[]){
      for (const auto& pair : wordFreq) {
         cout << pair.first << ": " << pair.second << endl;
     }
-    */
+    
 
-    /*for (size_t i = 0; i < content.size(); ++i) {
+    for (size_t i = 0; i < content.size(); ++i) {
         cout << content[i] << endl;
-    }*/
-    //cout << content << endl;
+    }
+
+    for (size_t i = 0; i < content2.size(); ++i) {
+        cout << content2[i] << endl;
+    }
+
+    // Open the destination file
+    ofstream ReadFile("ReadFile.txt");
+    if (!ReadFile) {
+        cerr << "Failed to open read file!" << endl;
+        return 1;
+    }
+
+    // Write the content to the destination file
+
+    for (size_t i = 0; i < content2.size(); ++i) {
+        ReadFile << content2[i] << endl;
+    }
+
+    cout << "Read file updated\n" << endl;
+
     
     // Open the destination file
     ofstream ProcessedFile("ProcessedFile.txt");
